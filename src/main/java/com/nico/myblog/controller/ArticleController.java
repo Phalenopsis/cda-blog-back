@@ -1,16 +1,15 @@
 package com.nico.myblog.controller;
 
 import com.nico.myblog.model.Article;
+import com.nico.myblog.model.Category;
 import com.nico.myblog.repository.ArticleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Limit;
+import com.nico.myblog.repository.CategoryRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,12 +19,16 @@ import java.util.Objects;
 public class ArticleController {
 
     private final ArticleRepository articleRepository;
+    private final CategoryRepository categoryRepository;
 
-    public ArticleController(ArticleRepository articleRepository) {
+    public ArticleController(
+            ArticleRepository articleRepository,
+            CategoryRepository categoryRepository
+    ) {
         this.articleRepository = articleRepository;
+        this.categoryRepository = categoryRepository;
     }
 
-    // Méthodes CRUD à venir
     @GetMapping
     public ResponseEntity<List<Article>> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
@@ -37,7 +40,6 @@ public class ArticleController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Article> getArticleById(@PathVariable Long id) {
-        System.out.println(id);
         Article article = articleRepository.findById(id).orElse(null);
         if(Objects.isNull(article)) {
             return ResponseEntity.notFound().build();
@@ -49,6 +51,13 @@ public class ArticleController {
     public ResponseEntity<Article> createArticle(@RequestBody Article article) {
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
+        if(Objects.nonNull(article.getCategory())) {
+            Category category = categoryRepository.findById(article.getCategory().getId()).orElse(null);
+            if(Objects.isNull(category)) {
+                return ResponseEntity.badRequest().body(null);
+            }
+            article.setCategory(category);
+        }
         Article savedArticle = articleRepository.save(article);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
     }
@@ -62,6 +71,14 @@ public class ArticleController {
         article.setTitle(articleDetails.getTitle());
         article.setContent(articleDetails.getContent());
         article.setUpdatedAt(LocalDateTime.now());
+
+        if(Objects.nonNull(articleDetails.getCategory())) {
+            Category category = categoryRepository.findById(articleDetails.getCategory().getId()).orElse(null);
+            if (Objects.isNull(category)) {
+                return ResponseEntity.badRequest().body(null);
+            }
+            article.setCategory(category);
+        }
 
         Article updatedArticle = articleRepository.save(article);
         return ResponseEntity.ok(updatedArticle);

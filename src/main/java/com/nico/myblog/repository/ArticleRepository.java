@@ -1,7 +1,6 @@
 package com.nico.myblog.repository;
 
 import com.nico.myblog.model.Article;
-import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
