@@ -1,5 +1,6 @@
 package com.nico.myblog.controller;
 
+import com.nico.myblog.dto.ArticleDTO;
 import com.nico.myblog.model.Article;
 import com.nico.myblog.model.Category;
 import com.nico.myblog.repository.ArticleRepository;
@@ -30,25 +31,26 @@ public class ArticleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Article>> getAllArticles() {
+    public ResponseEntity<List<ArticleDTO>> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
         if(articles.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(articles);
+        return ResponseEntity.ok(articles.stream().map(ArticleDTO::mapFromEntity).toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Article> getArticleById(@PathVariable Long id) {
+    public ResponseEntity<ArticleDTO> getArticleById(@PathVariable Long id) {
         Article article = articleRepository.findById(id).orElse(null);
         if(Objects.isNull(article)) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(article);
+        ArticleDTO articleDTO = new ArticleDTO(article);
+        return ResponseEntity.ok(articleDTO);
     }
 
     @PostMapping
-    public ResponseEntity<Article> createArticle(@RequestBody Article article) {
+    public ResponseEntity<ArticleDTO> createArticle(@RequestBody Article article) {
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
         if(Objects.nonNull(article.getCategory())) {
@@ -59,11 +61,11 @@ public class ArticleController {
             article.setCategory(category);
         }
         Article savedArticle = articleRepository.save(article);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ArticleDTO(savedArticle));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Article> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
+    public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
         Article article = articleRepository.findById(id).orElse(null);
         if(Objects.isNull(article)) {
             return ResponseEntity.notFound().build();
@@ -81,7 +83,7 @@ public class ArticleController {
         }
 
         Article updatedArticle = articleRepository.save(article);
-        return ResponseEntity.ok(updatedArticle);
+        return ResponseEntity.ok(new ArticleDTO(updatedArticle));
     }
 
     @DeleteMapping("/{id}")
